@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Question Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-section {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+            background: white;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .api-key-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .api-key-section h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .api-key-section p {
+            color: #856404;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        .download-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .question-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .question-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .question-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .question-content {
+            flex: 1;
+        }
+
+        .question-number {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .select-all-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .select-all-controls button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .select-all-controls button:hover {
+            background: #5a6268;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .download-controls {
+                justify-content: center;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .form-section, .results-section {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 Olympiad Question Generator</h1>
+            <p>Generate 30 challenging olympiad-style exam questions with AI</p>
+        </div>
+
+        <div class="form-section">
+            <form id="questionForm">
+                <div class="api-key-section">
+                    <h3>🔑 API Configuration</h3>
+                    <p>Enter your Gemini API key to generate questions. Get your free key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.</p>
+                    <div class="form-group">
+                        <label for="apiKey">Gemini API Key</label>
+                        <input type="password" id="apiKey" name="apiKey" class="form-control" placeholder="Enter your Gemini API key" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="class">Class</label>
+                        <select id="class" name="class" class="form-control" required>
+                            <option value="">Select Class</option>
+                            <option value="1">Class 1</option>
+                            <option value="2">Class 2</option>
+                            <option value="3">Class 3</option>
+                            <option value="4">Class 4</option>
+                            <option value="5">Class 5</option>
+                            <option value="6">Class 6</option>
+                            <option value="7">Class 7</option>
+                            <option value="8">Class 8</option>
+                            <option value="9">Class 9</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <select id="subject" name="subject" class="form-control" required>
+                            <option value="">Select Subject</option>
+                            <option value="Math">Mathematics</option>
+                            <option value="Social">Social Studies</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="English">English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="topics">Topics</label>
+                    <input type="text" id="topics" name="topics" class="form-control" 
+                           placeholder="Enter topics separated by commas (e.g., Algebra, Fractions, Geometry)" required>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button type="submit" class="generate-btn">✨ Generate Questions</button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Generating your personalized questions...</p>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2>📋 Generated Questions (30 Olympiad-Style)</h2>
+                <div class="download-controls">
+                    <button class="download-btn" id="downloadPdf">📄 Download as PDF</button>
+                    <button class="download-btn" id="downloadWord">📝 Download as Word</button>
+                </div>
+            </div>
+
+            <div class="select-all-controls">
+                <span>Select questions:</span>
+                <button type="button" id="selectAll">Select All</button>
+                <button type="button" id="deselectAll">Deselect All</button>
+                <span id="selectedCount">0 selected</span>
+            </div>
+
+            <div id="questionsContainer"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        let generatedQuestions = [];
+
+        document.getElementById('questionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await generateQuestions();
+        });
+
+        document.getElementById('selectAll').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.question-checkbox input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        });
+
+        document.getElementById('deselectAll').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.question-checkbox input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        });
+
+        document.getElementById('downloadPdf').addEventListener('click', function() {
+            downloadSelectedQuestions('pdf');
+        });
+
+        document.getElementById('downloadWord').addEventListener('click', function() {
+            downloadSelectedQuestions('word');
+        });
+
+        async function generateQuestions() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const classValue = document.getElementById('class').value;
+            const subject = document.getElementById('subject').value;
+            const topics = document.getElementById('topics').value.trim();
+
+            console.log('Form values:', { apiKey: apiKey ? 'PROVIDED' : 'MISSING', classValue, subject, topics });
+
+            if (!apiKey || !classValue || !subject || !topics) {
+                showError('Please fill in all fields including the API key.');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            const prompt = `Generate exactly 30 age-appropriate, exam-style questions for Class ${classValue} students studying ${subject}. 
+            Focus on these topics: ${topics}.
+            
+            Requirements:
+            - Questions should be suitable for Class ${classValue} level (age ${getAgeRange(classValue)})
+            - Mix of question types: multiple choice, which is olympiad type 
+            - Progressive difficulty from basic to intermediate
+            - Clear, concise language appropriate for the age group
+            - Include practical examples where relevant
+            
+            Format each question clearly and number them 1-30. Make sure each question is complete and self-contained.`;
+
+            try {
+                console.log('Making API request...');
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 8192,
+                        }
+                    })
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    
+                    let errorMessage = 'Failed to generate questions';
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error?.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error('Invalid response format from API');
+                }
+
+                const generatedText = data.candidates[0].content.parts[0].text;
+                console.log('Generated text:', generatedText);
+                
+                generatedQuestions = parseQuestions(generatedText);
+                console.log('Parsed questions:', generatedQuestions);
+                
+                if (generatedQuestions.length === 0) {
+                    throw new Error('No questions could be parsed from the response');
+                }
+                
+                displayQuestions(generatedQuestions, classValue, subject, topics);
+                
+            } catch (error) {
+                console.error('Full error details:', error);
+                let errorMessage = `Error generating questions: ${error.message}`;
+                
+                if (error.message.includes('API key')) {
+                    errorMessage += '\n\nPlease check that your API key is correct and has access to the Gemini API.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += '\n\nThis might be a browser security issue. Try refreshing the page.';
+                } else if (error.message.includes('fetch')) {
+                    errorMessage += '\n\nPlease check your internet connection.';
+                }
+                
+                showError(errorMessage);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function parseQuestions(text) {
+            const questions = [];
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            let currentQuestion = '';
+            let questionNumber = 0;
+            
+            for (let line of lines) {
+                line = line.trim();
+                
+                // Check if line starts with a number (new question)
+                const numberMatch = line.match(/^(\d+)[\.\)]\s*(.+)/);
+                if (numberMatch && parseInt(numberMatch[1]) <= 30) {
+                    // Save previous question if exists
+                    if (currentQuestion.trim()) {
+                        questions.push({
+                            id: questionNumber,
+                            text: currentQuestion.trim()
+                        });
+                    }
+                    
+                    questionNumber = parseInt(numberMatch[1]);
+                    currentQuestion = numberMatch[2];
+                } else if (questionNumber > 0) {
+                    // Continue building current question
+                    currentQuestion += ' ' + line;
+                }
+            }
+            
+            // Add the last question
+            if (currentQuestion.trim() && questionNumber > 0) {
+                questions.push({
+                    id: questionNumber,
+                    text: currentQuestion.trim()
+                });
+            }
+            
+            // If parsing failed, try to split by common patterns
+            if (questions.length === 0) {
+                const questionBlocks = text.split(/(?=\d+[\.\)])/);
+                questionBlocks.forEach((block, index) => {
+                    const cleanBlock = block.trim();
+                    if (cleanBlock && index < 30) {
+                        questions.push({
+                            id: index + 1,
+                            text: cleanBlock.replace(/^\d+[\.\)]\s*/, '')
+                        });
+                    }
+                });
+            }
+            
+            return questions.slice(0, 30); // Ensure we only return 30 questions
+        }
+
+        function displayQuestions(questions, classValue, subject, topics) {
+            const container = document.getElementById('questionsContainer');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            if (questions.length === 0) {
+                showError('No questions could be generated. Please try again with different topics.');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-item';
+                questionDiv.innerHTML = `
+                    <div class="question-checkbox">
+                        <input type="checkbox" id="q${index}" checked onchange="updateSelectedCount()">
+                        <div class="question-content">
+                            <div class="question-number">${question.id}</div>
+                            <div class="question-text">${question.text}</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+            
+            resultsSection.style.display = 'block';
+            updateSelectedCount();
+            
+            // Smooth scroll to results
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.question-checkbox input[type="checkbox"]');
+            const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            document.getElementById('selectedCount').textContent = `${selectedCount} selected`;
+            
+            const downloadButtons = document.querySelectorAll('.download-btn');
+            downloadButtons.forEach(btn => {
+                btn.disabled = selectedCount === 0;
+            });
+        }
+
+        function downloadSelectedQuestions(format) {
+            const checkboxes = document.querySelectorAll('.question-checkbox input[type="checkbox"]');
+            const selectedQuestions = [];
+            
+            checkboxes.forEach((checkbox, index) => {
+                if (checkbox.checked && generatedQuestions[index]) {
+                    selectedQuestions.push(generatedQuestions[index]);
+                }
+            });
+            
+            if (selectedQuestions.length === 0) {
+                showError('Please select at least one question to download.');
+                return;
+            }
+            
+            const classValue = document.getElementById('class').value;
+            const subject = document.getElementById('subject').value;
+            const topics = document.getElementById('topics').value;
+            
+            if (format === 'pdf') {
+                downloadAsPDF(selectedQuestions, classValue, subject, topics);
+            } else if (format === 'word') {
+                downloadAsWord(selectedQuestions, classValue, subject, topics);
+            }
+        }
+
+        function downloadAsPDF(questions, classValue, subject, topics) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header
+            doc.setFontSize(20);
+            doc.text('Olympiad Exam Questions', 20, 30);
+            
+            doc.setFontSize(12);
+            doc.text(`Class: ${classValue}`, 20, 45);
+            doc.text(`Subject: ${subject}`, 20, 55);
+            doc.text(`Topics: ${topics}`, 20, 65);
+            doc.text(`Total Questions: ${questions.length}`, 20, 75);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 85);
+            
+            let yPosition = 105;
+            
+            questions.forEach((question, index) => {
+                // Check if we need a new page
+                if (yPosition > 250) {
+                    doc.addPage();
+                    yPosition = 30;
+                }
+                
+                doc.setFontSize(14);
+                doc.text(`Question ${question.id}:`, 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFontSize(11);
+                const lines = doc.splitTextToSize(question.text, 170);
+                doc.text(lines, 20, yPosition);
+                yPosition += lines.length * 7 + 15;
+            });
+            
+            doc.save(`olympiad-questions-class${classValue}-${subject.toLowerCase()}.pdf`);
+        }
+
+        function downloadAsWord(questions, classValue, subject, topics) {
+            const { Document, Packer, Paragraph, TextRun, HeadingLevel } = docx;
+            
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new Paragraph({
+                            text: "Olympiad Exam Questions",
+                            heading: HeadingLevel.HEADING_1,
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: `Class: ${classValue}`, break: 1 }),
+                                new TextRun({ text: `Subject: ${subject}`, break: 1 }),
+                                new TextRun({ text: `Topics: ${topics}`, break: 1 }),
+                                new TextRun({ text: `Total Questions: ${questions.length}`, break: 1 }),
+                                new TextRun({ text: `Generated on: ${new Date().toLocaleDateString()}`, break: 2 }),
+                            ],
+                        }),
+                        ...questions.flatMap(question => [
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: `Question ${question.id}:`, bold: true, break: 1 }),
+                                ],
+                            }),
+                            new Paragraph({
+                                text: question.text,
+                            }),
+                            new Paragraph({ text: "" }), // Empty paragraph for spacing
+                        ]),
+                    ],
+                }],
+            });
+            
+            Packer.toBlob(doc).then(blob => {
+                saveAs(blob, `olympiad-questions-class${classValue}-${subject.toLowerCase()}.docx`);
+            });
+        }
+
+        function getAgeRange(classValue) {
+            const age = parseInt(classValue) + 5;
+            return `${age}-${age + 1} years`;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.querySelector('.generate-btn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.innerHTML = message.replace(/\n/g, '<br>');
+            errorDiv.style.display = 'block';
+            
+            // Scroll to error message
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Initialize selected count on page load
+        updateSelectedCount();
+    </script>
+</body>
+</html>
